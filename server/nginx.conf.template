@@ -1,0 +1,83 @@
+
+user  www-data;
+worker_processes  2;
+
+
+#pid        logs/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    sendfile        on;
+
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+	{% for website in websites %}
+		{% if website.cell("Enabled").rawData == "1" %}
+		server {
+			listen 80;
+			server_name {{website.cell("Domain")}};
+			client_max_body_size 300M;
+
+			location / {
+				{% if str(website.cell("Access username")) %}
+					auth_basic "Restricted";
+					auth_basic_user_file {{ website.cell("Physical directory") }}/authCredentials;
+				{% end if %}
+				
+				{% if website.cell("Allow remote access").rawData == "0" %}
+					allow   192.168.1.0/24;
+					deny    all;
+				{% end if %}
+				
+				{% if str(website.cell("Type")) == "Static files" %}
+					root   {{ website.cell("Web root directory") }};
+					index  index.html index.htm;
+				{% end if %}
+		
+				{% if str(website.cell("Type")) == "PHP" %}
+			
+					root   {{ website.cell("Web root directory") }};
+					index  index.php index.html index.htm;
+					try_files $uri $uri/ /index.php?$args;
+					location ~ ^.+\.php$ {
+						fastcgi_split_path_info ^(.+\.php)(/.+)$;
+						fastcgi_pass unix:/var/run/php5-fpm.sock;
+						fastcgi_index  index.php;
+						fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+						include        fastcgi_params;
+						try_files $uri =404;
+					}
+				{% end if %}
+		
+				{% if str(website.cell("Type")) == "Node.JS" %}
+					proxy_pass http://localhost:{{website.cell("Port number")}};
+					proxy_set_header Upgrade $http_upgrade;
+				    proxy_set_header Connection "upgrade";
+				{% end if %}
+		
+				{% if str(website.cell("Type")) == "Python" %}
+					proxy_pass http://localhost:{{website.cell("Port number")}};
+					proxy_set_header Upgrade $http_upgrade;
+				    proxy_set_header Connection "upgrade";
+				{% end if %}
+			}
+		}
+		{%end if%}
+    {% end for %}
+    
+    server {
+    	listen 80 default_server;
+    	return 404;
+    	deny all;
+    }
+
+}
