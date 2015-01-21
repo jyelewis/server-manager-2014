@@ -43,6 +43,7 @@ install("npm")
 install("php5-fpm")
 install("php5-mysql")
 install("sqlite3")
+install("git")
 
 print("setting up NPM")
 os.system("npm config set registry http://registry.npmjs.org/")
