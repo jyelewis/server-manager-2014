@@ -50,6 +50,7 @@ os.system("npm config set registry http://registry.npmjs.org/")
 print("installing pip and python tools")
 install("python-pip")
 install("python-dev")
+install("libevent-dev")
 install("build-essential")
 install("python3-setuptools")
 
