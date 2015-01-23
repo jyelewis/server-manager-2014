@@ -39,6 +39,7 @@ install("mysql-server")
 install("nginx")
 install("python3")
 install("nodejs")
+os.system("ln -s /usr/bin/nodejs /usr/bin/node") #on ubuntu node.js is installed as nodejs
 install("npm")
 install("php5-fpm")
 install("php5-mysql")
